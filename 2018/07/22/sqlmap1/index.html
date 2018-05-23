@@ -6,15 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://www.suixin.red">
-  <title>Archives: 2018 | blog</title>
+  <title>QLMAP源码分析（一） | blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="blog">
-<meta property="og:url" content="http://www.suixin.red/archives/2018/index.html">
+  <meta name="description" content="关于事件应急响应管理的5条建议">
+<meta name="keywords" content="sqlmap,python">
+<meta property="og:type" content="article">
+<meta property="og:title" content="QLMAP源码分析（一）">
+<meta property="og:url" content="http://www.suixin.red/2018/07/22/sqlmap1/index.html">
 <meta property="og:site_name" content="blog">
+<meta property="og:description" content="关于事件应急响应管理的5条建议">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-05-23T08:19:33.886Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="blog">
+<meta name="twitter:title" content="QLMAP源码分析（一）">
+<meta name="twitter:description" content="关于事件应急响应管理的5条建议">
   
     <link rel="alternative" href="/atom.xml" title="blog" type="application/atom+xml">
   
@@ -150,36 +155,107 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-sqlmap1" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2018" class="archive-year">2018</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/07/22/sqlmap1/" class="archive-article-date">
-  	<time datetime="2018-07-22T07:08:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-22</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/07/22/sqlmap1/">QLMAP源码分析（一）</a>
+    <h1 class="article-title" itemprop="name">
+      QLMAP源码分析（一）
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
+        
+        <a href="/2018/07/22/sqlmap1/" class="archive-article-date">
+  	<time datetime="2018-07-22T07:08:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>关于事件应急响应管理的5条建议<br><a id="more"></a></p>
+<h1 id="toc_0"><strong>SQLMAP源码分析（一）</strong></h1>
+
+<p>说起来，学习Python很大一部分原因是由于对WEB安全的兴趣以及对SQLMAP这款工具的好奇，曾经设想学完Python基础就读一读SQLMAP源码，然而懒病一犯，随之就大江东去。近来，又重新燃起了读源码的想法，耗费几天时间，基本算是了解一些，在此记录下来，分享出去。有始但不一定有终，但终究好于不做，惭愧。</p>
+
+<hr>
+
+<p>我的源码学习环境如下：</p>
+
+<p>　（1）PentesterLab虚拟机；</p>
+
+<p>　（2）PyCharm Community Edition 2016.3;</p>
+
+<p>　（3）Notepad++</p>
+
+<p>　（4）SQLMAP 1.1.1.4#dev</p>
+
+<p>好了，先将几个重要的函数、变量撩着，main()除外，不足在后续补充完善。</p>
+
+<p>1.cmdLineParser()<br>位于sqlmap.py中第123行，cmdLineOptions.update(cmdLineParser().<strong>dict</strong>)，此函数主要用了optparse模块来解析脚本传入的参数，定义在lib\parse\cmdline.py模块中，使用sqlmap工具的小伙伴们会在此发现很多常见的命令，比如-u -d –random-agent –current-db –dbs –tables –columns等等，在此版本中实际是有194个参数的，这么丰富的功能，有待挖掘啊！</p>
+
+<p>2.initOptions(cmdLineOptions)<br>位于sqlmap.py中第124行，此函数主要作用是初始化conf、kb这两个始终贯穿程序的重要变量（自定义字典），定义在lib\core\option.py模块中，其中conf初始化后有26个键值对，kb初始化后有141个键值对，同时，此函数最后又调用了_mergeOptions函数，用来合并cmdLineParser()的参数以及conf初始化的参数，合并后conf总共有220个键值对。</p>
+
+<p>3.init()<br>位于sqlmap.py中第141行，此函数主要作用是sqlmap运行的一系列初始化工作，定义在lib\core\option.py模块中，其中主要的作用包括检查依赖包、参数输入合规性检查、设置代理、加载tamper、解析targeturl、设置请求头、设置线程数、加载boundaries<em>xml、加载payloads</em>xml等。</p>
+
+<p>4.start()<br>位于sqlmap.py中第151行，此函数主要作用是开始进行注入检查，判断是否存在SQL注入漏洞，定义在lib\controller\controller.py模块中，此函数是重中之重。start()函数中又调用了几个非常重要的函数，如下。</p>
+
+<p>4.1 setupTargetEnv()<br>定义在lib\core\target.py模块中，此函数的主要作用是初始化扫描结果环境，包括创建扫描结果存放目录、sqllite3数据库（或者从已有结果中提取数据，对于已扫描的结果不用再扫描）等。</p>
+
+<p>4.2 checkConnection()<br>位于lib\controller\controller.py中377行，此函数的主要作用是检查给定的url是否可以访问。</p>
+
+<p>4.3 checkWaf()<br>位于lib\controller\controller.py第380行，此函数的主要作用是判断目标是否有WAF，payload会采用&quot;AND 1=1 UNION ALL SELECT 1,NULL,&#39;<script>alert(&quot;XSS&quot;)</script>&#39;,table<em>name FROM information</em>schema.tables WHERE 2&gt;1–/**/; EXEC xp_cmdshell(&#39;cat ../../../etc/passwd&#39;)#&quot;</p>
+
+<p>4.4 checkStability()<br>位于lib\controller\controller.py第394行，此函数的主要作用是判断目标target内容是否是会很快变化，其核心是对比第一次访问目标target内容与延时再次访问target内容做比较，如果firstPage == secondPage，则认为页面时稳固的。</p>
+
+<p>4.5 checkDynParam()<br>位于lib\controller\controller.py第493行，此函数的主要作用是检查给定url中的参数是否是动态的，如果不是动态的则需要选取其它参数。比如name=root,此处的参数则指name。其核心是给参数name另外一个随机值，比如name=2394，然后对比两次返回的页面，如果相似度高于0.98则认为页面内容基本没变，参数不是动态的。</p>
+
+<p>4.6 heuristicCheckSqlInjection()<br>位于lib\controller\controller.py第516行，此函数的主要作用是一个试探性检查，payload是name=root)((\&#39;)).&quot;(,（或类似），有可能会爆出后端db信息、xss漏洞、文件上包含漏洞等信息。</p>
+
+<p>4.7 checkSqlInjection()<br>位于lib\controller\controller.py第528行，真正的SQL注入检查，重中之重。此函数会结合xml\payloads\下的基于布尔的、基于时间的、基于错误的、内联查询、对查询、基于union的注入检查xml以及boundaries.xml来提取注入语句进行注入漏洞判断。此处不详细讲解，后期单独说。</p>
+
+<p>OK，说完start()函数中的几个关键函数调用，其中4.2~4.7均在lib\controller\checks.py模块中定义，而它们在checks均会调用的一些核心函数如下：</p>
+
+<ol><br><li>Request.queryPage()<br>根据构造好的payload访问指定目标web，并对比返回内容与最初页面内容，包含两个重要的函数。位于lib\request\connect.py模块中</li><br></ol>
+
+<p>5.1 Connect.getPage()<br>实际访问web的方法，调用了urllib2.Request方法。</p>
+
+<p>5.2 comparison()<br>此函数主要作用是比较页面内容，判断页面变化，调用了difflib库。</p>
+
+<ol><br><li><p>agent.payload()<br>定义于lib\core\agent.py模块中，主要作用是根据xml下的注入表达式生成实际可用的payload，用到了正则、随机数（字符串）等内容。</p></li><br><li><p>action()<br>位于lib\controller\controller.py中639行，主要作用是注入SQL，获取指定信息，比如数据库、表、字段、用户、版本等，定义于lib\controller\action.py模块。此模块后期单独列出分享。</p></li><br></ol>
+
+<p>SQLMAP源码分析第一章节就先到这吧，不足之处、错误之处后期深入后再处理。</p>
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -195,61 +271,120 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://www.suixin.red/2018/07/22/sqlmap1/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2018/07/22/slqmap2/" class="archive-article-date">
-  	<time datetime="2018-07-22T07:08:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-22</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2018/07/22/slqmap2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">SQLMAP源码分析（一）</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2018/07/22/slqmap2/">SQLMAP源码分析（一）</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">sqlmap</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">python</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#toc_0"><span class="toc-number">1.</span> <span class="toc-text">SQLMAP源码分析（一）</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
   
-    </div></section>
   
 
-    
+  
+
+  
+
+  
+
 
 
           </div>
@@ -272,8 +407,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

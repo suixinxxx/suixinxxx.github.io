@@ -8,17 +8,18 @@
   <link rel="dns-prefetch" href="http://www.suixin.red">
   <title>SQLMAP源码分析（一） | blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="keywords" content="sqlmap,python">
+  <meta name="description" content="SQLMAP源码分析（一）">
+<meta name="keywords" content="sqlmap,python">
 <meta property="og:type" content="article">
 <meta property="og:title" content="SQLMAP源码分析（一）">
-<meta property="og:url" content="http://www.suixin.red/2018/07/22/sql2/index.html">
+<meta property="og:url" content="http://www.suixin.red/2018/07/22/sqlmap/index.html">
 <meta property="og:site_name" content="blog">
+<meta property="og:description" content="SQLMAP源码分析（一）">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://www.suixin.red/2018/07/22/sql2/123.jpg">
-<meta property="og:updated_time" content="2018-05-24T08:53:28.041Z">
+<meta property="og:updated_time" content="2018-05-31T11:11:53.846Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SQLMAP源码分析（一）">
-<meta name="twitter:image" content="http://www.suixin.red/2018/07/22/sql2/123.jpg">
+<meta name="twitter:description" content="SQLMAP源码分析（一）">
   
     <link rel="alternative" href="/atom.xml" title="blog" type="application/atom+xml">
   
@@ -154,7 +155,7 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-sql2" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-sqlmap" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
@@ -166,7 +167,7 @@
   
 
         
-        <a href="/2018/07/22/sql2/" class="archive-article-date">
+        <a href="/2018/07/22/sqlmap/" class="archive-article-date">
   	<time datetime="2018-07-22T07:08:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-07-22</time>
 </a>
         
@@ -174,8 +175,26 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <img src="/2018/07/22/sql2/123.jpg" title="Archer主题页面">
-<a id="more"></a>
+        <p>SQLMAP源码分析（一）<br><br><a id="more"></a></p>
+<h1 id="toc_0">SQLmap源码分析之框架初始化(一)</h1>
+
+<pre><div class="line">Doc   帮助文档</div><div class="line">Extra 拓展程序，包含多种额外功能，例如运行cmd、安全执行、shellcode等</div><div class="line">Lib 类库程序，包含多种连接库，如5种注入类型、提权操作</div><div class="line">Plugins  插件程序，包括各种数据库的信息以及数据库的通用事项</div><div class="line">Procs sql语句，包含oracle，postgresql 等的dns_request程序、Mysql的读写文件、mssql的xp_cmdshell等sql语句</div><div class="line">Shell  shell应用，包含多个语言注入成功的shell脚本</div><div class="line">Tamper  多个绕过程序</div><div class="line">Thirdparty 第三方程序，如beautifulsoup、优化，保持连接，颜色等等</div><div class="line">Txt 爆破字典，如浏览器类型、 表，列字典</div><div class="line">Udf   用户定义的mysql的攻击载荷</div><div class="line">Waf  waf防火墙特征指纹</div><div class="line">Xml 多种数据库检测载荷以及指纹定义</div><div class="line">sqlmap.conf 配置文件</div><div class="line">sqlmap.py 主程序</div><div class="line">sqlmap.api 接口程序</div></pre>
+
+<div><pre><code class="language-none">def modulePath():<br>&quot;&quot;&quot;<br>This will get us the program&#39;s directory, even if we are frozen<br>using py2exe<br>&quot;&quot;&quot;<br><br>try:<br>    _ = sys.executable if weAreFrozen() else <strong>file</strong><br>except NameError:<br>    _ = inspect.getsourcefile(modulePath)<br><br>return getUnicode(os.path.dirname(os.path.realpath(_)), encoding=sys.getfilesystemencoding() or UNICODE_ENCODING)<br><br>def weAreFrozen():<br>&quot;&quot;&quot;<br>Returns whether we are frozen via py2exe.<br>This will affect how we find out where we are located.<br>Reference: <a href="http://www.py2exe.org/index.cgi/WhereAmI" target="_blank" rel="noopener">http://www.py2exe.org/index.cgi/WhereAmI</a><br>&quot;&quot;&quot;<br><br>return hasattr(sys, &quot;frozen&quot;)</code></pre></div>
+
+<p>1.<strong>file</strong>,获取执行目录，相对路劲执行获取相对目录，绝对路劲执行获取绝对目录</p>
+
+<p>2.如果sys含有frozen属性，证明你运行的是被打包成exe的文件，如果没有的话，你执行的就是script<br>  3.inspect模块主要提供了四种用处：</p>
+
+<p>(1) 对是否是模块，框架，函数等进行类型检查。</p>
+
+<p>(2) 获取源码</p>
+
+<p>(3) 获取类或函数的参数的信息</p>
+
+<p>(4) 解析堆栈</p>
+
+<p>4.optparse模块来解析脚本传入的参数</p>
 
       
 
@@ -270,7 +289,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://www.suixin.red/2018/07/22/sql2/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://www.suixin.red/2018/07/22/sqlmap/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -284,9 +303,18 @@
   
 <nav id="article-nav">
   
+    <a href="/2018/07/22/sql2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          SQLMAP源码分析（一）
+        
+      </div>
+    </a>
   
-    <a href="/2018/07/22/sqlmap/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">SQLMAP源码分析（一）</div>
+  
+    <a href="/2018/07/22/sqlmap1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">QLMAP源码分析（一）</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -313,7 +341,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    目录，不存在的…
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#toc_0"><span class="toc-number">1.</span> <span class="toc-text">SQLmap源码分析之框架初始化(一)</span></a></li></ol>
                     </div>
                 </span>
             </div>
